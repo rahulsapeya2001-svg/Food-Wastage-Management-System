@@ -174,7 +174,10 @@ if page == "📊 Executive Dashboard":
         GROUP BY Food_Type
         ORDER BY Frequency DESC;
         """
-        st.dataframe(fetch_data(sql), use_container_width=True)
+        df = fetch_data(sql)
+        # Add EDA Chart
+        st.bar_chart(df.set_index("Food_Type"), color="#2E7D32")
+        st.dataframe(df, use_container_width=True)
 
     elif query_selection == "8. Claims per Food Item (Top 5)":
         sql = """
@@ -197,14 +200,17 @@ if page == "📊 Executive Dashboard":
         """
         st.dataframe(fetch_data(sql), use_container_width=True)
 
-    elif query_selection == "10. Claim Status Percentages":
+   elif query_selection == "10. Claim Status Percentages":
         sql = """
         SELECT Status, 
                ROUND((COUNT(Claim_ID) * 100.0 / (SELECT COUNT(*) FROM claims)), 2) AS Percentage
         FROM claims
         GROUP BY Status;
         """
-        st.dataframe(fetch_data(sql), use_container_width=True)
+        df = fetch_data(sql)
+        # Add EDA Chart
+        st.bar_chart(df.set_index("Status"), color="#FF7043")
+        st.dataframe(df, use_container_width=True)
 
     elif query_selection == "11. Average Quantity Claimed per Receiver (Top 5)":
         sql = """
