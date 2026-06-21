@@ -12,7 +12,6 @@ st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     
     /* Sleek buttons with a warm gradient-like orange */
     div.stButton > button:first-child {
