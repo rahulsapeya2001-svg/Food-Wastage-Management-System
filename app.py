@@ -63,7 +63,7 @@ page = st.sidebar.radio("📌 Main Menu", [
     "📊 Executive Dashboard", 
     "🔍 Find Available Food", 
     "⚙️ Manage Listings (CRUD)", 
-    "📞 Provider Directory"
+    "📞 Contact Directory"
 ])
 st.sidebar.markdown("---")
 st.sidebar.info("A Local Food Wastage Management System connecting surplus food to those in need.")
@@ -257,25 +257,42 @@ if page == "📊 Executive Dashboard":
         ORDER BY Claim_Month ASC;
         """
         df_trends = fetch_data(sql)
-        st.bar_chart(df_trends.set_index("Claim_Month"), color="#FF7043") # Styled chart color!
+        st.bar_chart(df_trends.set_index("Claim_Month"), color="#FF7043") 
         st.dataframe(df_trends, use_container_width=True)
 
 # -------------------------------------------------------------
-# PAGE 2: FIND AVAILABLE FOOD
+# PAGE 2: FIND AVAILABLE FOOD (UPDATED FILTERS)
 # -------------------------------------------------------------
 elif page == "🔍 Find Available Food":
     st.title("Search Surplus Food")
-    col1, col2 = st.columns(2)
+    st.markdown("Filter our database to find exactly what you need.")
+    
+    # 4-Column Layout for the required filters
+    col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
         cities_df = fetch_data("SELECT DISTINCT Location FROM food_listings ORDER BY Location")
-        selected_city = st.selectbox("Select City", ["All"] + cities_df['Location'].tolist())
+        selected_city = st.selectbox("Location (City)", ["All"] + cities_df['Location'].tolist())
     with col2:
         meals_df = fetch_data("SELECT DISTINCT Meal_Type FROM food_listings ORDER BY Meal_Type")
-        selected_meal = st.selectbox("Select Meal Type", ["All"] + meals_df['Meal_Type'].tolist())
+        selected_meal = st.selectbox("Meal Type", ["All"] + meals_df['Meal_Type'].tolist())
+    with col3:
+        food_types_df = fetch_data("SELECT DISTINCT Food_Type FROM food_listings ORDER BY Food_Type")
+        selected_food = st.selectbox("Food Type", ["All"] + food_types_df['Food_Type'].tolist())
+    with col4:
+        providers_df = fetch_data("SELECT DISTINCT Provider_Type FROM food_listings ORDER BY Provider_Type")
+        selected_provider = st.selectbox("Provider", ["All"] + providers_df['Provider_Type'].tolist())
 
-    query = "SELECT Food_Name, Quantity, Expiry_Date, Provider_Type, Location, Meal_Type FROM food_listings WHERE 1=1"
+    # Build the dynamic SQL query based on all 4 filters
+    query = """
+    SELECT Food_Name, Quantity, Expiry_Date, Provider_Type, Location, Food_Type, Meal_Type 
+    FROM food_listings WHERE 1=1
+    """
     if selected_city != "All": query += f" AND Location = '{selected_city}'"
     if selected_meal != "All": query += f" AND Meal_Type = '{selected_meal}'"
+    if selected_food != "All": query += f" AND Food_Type = '{selected_food}'"
+    if selected_provider != "All": query += f" AND Provider_Type = '{selected_provider}'"
+    
     st.dataframe(fetch_data(query), use_container_width=True)
 
 # -------------------------------------------------------------
@@ -320,9 +337,19 @@ elif page == "⚙️ Manage Listings (CRUD)":
                 st.error(f"Food ID {food_id} deleted permanently!")
 
 # -------------------------------------------------------------
-# PAGE 4: PROVIDER DIRECTORY
+# PAGE 4: CONTACT DIRECTORY (PROVIDERS & RECEIVERS)
 # -------------------------------------------------------------
-elif page == "📞 Provider Directory":
-    st.title("Our Generous Providers")
-    st.markdown("Use this directory to locate and contact surplus food donors directly.")
-    st.dataframe(fetch_data("SELECT Name, Type, Address, City, Contact FROM providers"), use_container_width=True)
+elif page == "📞 Contact Directory":
+    st.title("Platform Contact Directory")
+    st.markdown("Use this directory to locate and contact surplus food donors and receivers directly.")
+    
+    # Using tabs to show both providers and receivers cleanly
+    tab1, tab2 = st.tabs(["🏢 Generous Providers", "🤝 Registered Receivers"])
+    
+    with tab1:
+        st.subheader("Provider Contacts")
+        st.dataframe(fetch_data("SELECT Name, Type, Address, City, Contact FROM providers"), use_container_width=True)
+        
+    with tab2:
+        st.subheader("Receiver Contacts")
+        st.dataframe(fetch_data("SELECT Name, Type, City, Contact FROM receivers"), use_container_width=True)
